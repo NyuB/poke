@@ -1,7 +1,9 @@
 package nyub.poke
 
-class MultiValueTask(private val values: Map<OutputKey, Any>) : Task {
-    override fun execute(kontext: Kontext): Kontext.K<Map<OutputKey, Any>> {
-        return kontext.one { values }
+import nyub.poke.Kontext.Companion.one
+
+class MultiValueTask(private val values: Map<NodeKey, Any>) : Task {
+    override fun Kontext.execute(): Map<NodeKey, Kontext.K<*>> {
+        return values.mapValues { one { it } }
     }
 }

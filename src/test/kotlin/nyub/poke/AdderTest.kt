@@ -1,45 +1,57 @@
 package nyub.poke
 
-import nyub.poke.Kontext.Companion.get
-import nyub.poke.SingleValueTask.Companion.`with label`
+import nyub.poke.Kontext.Companion.combine
+import nyub.poke.Kontext.Companion.fetch
+import nyub.poke.SingleValueTask.Companion.`with key`
 import nyub.poke.Task.Companion.parents
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 class AdderTest {
-    private val adder = Task { ktx ->
-        val left = ktx["A", "out", Integer::class.java]
-        val right = ktx["B", "out", Integer::class.java]
-        ktx.combine(left, right) { l, r ->
-            mapOf("out" to l.toInt() + r.toInt())
+    private val adder = Task {
+        val left = fetch("A::out", Integer::class.java)
+        val right = fetch("B::out", Integer::class.java)
+        val added = combine(left, right) { l, r ->
+            l.toInt() + r.toInt()
         }
+        mapOf("out" to added)
     }
 
     @Test
     fun onePlusOne() {
-        val a = 1 `with label` "out"
-        val b = 2 `with label` "out"
+        val a = 1 `with key` "out"
+        val b = 2 `with key` "out"
         val store = Store.empty()
 
         runAs("A", a, store)
         runAs("B", b, store)
         runAs("Add", adder, store)
 
-        assertEquals(store["Add"]!!["out"], 3)
+        store["Add::out"] `is equal to` 3
 
     }
 
     @Test
     fun dependenciesInferredFromTask() {
-        assertEquals(adder.parents(), setOf(Dependency("A", "out"), Dependency("B", "out")))
+        adder.parents() `is equal to`
+                setOf(
+                    Dependency("A::out", java.lang.Integer::class.java),
+                    Dependency("B::out", java.lang.Integer::class.java)
+                )
     }
 
-    private fun runAs(key: NodeKey, task: Task, store: MutableMap<NodeKey, Map<OutputKey, Any>>) {
-        val result = task.execute(ExecutionKontext(store))
-        if (result.value != null) {
-            store[key] = result.value
-        } else {
-            throw IllegalStateException("Could not run task $key, because: ${result.errors}")
+    private fun runAs(key: NodeKey, task: Task, store: MutableMap<NodeKey, Any>) {
+        val result = with(task) {
+            ExecutionKontext(store).execute()
+        }
+        result.entries.forEach {
+            val value = it.value.value
+            val valueKey = it.key
+            if (value != null) {
+                store["$key::$valueKey"] = value
+            }
         }
     }
+
+    private infix fun <T> T.`is equal to`(other: T) = assertEquals(this, other)
 }

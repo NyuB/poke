@@ -1,3 +1,3 @@
 package nyub.poke
 
-data class Dependency(val nodeKey: NodeKey, val outputKey: OutputKey)
+data class Dependency<T>(val key: NodeKey, val clazz: Class<T>)

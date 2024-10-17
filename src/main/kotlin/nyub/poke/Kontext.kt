@@ -5,44 +5,53 @@ sealed interface Kontext {
     /**
      * Retrieves a result of type `clazz` from `dependency` within this context
      */
-    fun <A> get(clazz: Class<A>, dependency: Dependency): K<A>
+    fun <A> fetch(dependency: Dependency<A>): K<A>
 
     /**
      * Lifts a single value into context, passed as lambda to allow lazy evaluation, e.g. by [DependencyKontext]
      */
-    fun <A> one(a: () -> A): K<A>
+    fun <A> one(clazz: Class<A>, a: () -> A): K<A>
 
     /**
      * Applies `f` to a result within this context
      */
-    fun <A, B> K<A>.map(f: (A) -> B): K<B>
+    fun <A, B> K<A>.map(clazz: Class<B>, f: (A) -> B): K<B>
 
     /**
      * Applies `f` to a pair of result within this context
      */
-    fun <A, B, C> combine(a: K<A>, b: K<B>, f: (A, B) -> C): K<C>
+    fun <A, B, C> combine(clazz: Class<C>, a: K<A>, b: K<B>, f: (A, B) -> C): K<C>
 
     companion object {
-        /**
-         * Syntactic sugar for [Kontext.get]
-         */
-        operator fun <A> Kontext.get(nodeKey: NodeKey, outputKey: OutputKey, clazz: Class<A>): K<A> =
-            this.get(clazz, Dependency(nodeKey, outputKey))
+        fun <A> Kontext.fetch(nodeKey: NodeKey, clazz: Class<A>): K<A> =
+            this.fetch(Dependency(nodeKey, clazz))
+
+        inline fun <reified A> Kontext.one(noinline a: () -> A) = one(A::class.java, a)
+
+        inline fun <A, B, reified C> Kontext.combine(a: K<A>, b: K<B>, noinline f: (A, B) -> C): K<C> =
+            combine(C::class.java, a, b, f)
 
         /**
          * Syntactic sugar for nested [Kontext.combine]s
          */
-        fun <A, B, C, D> Kontext.combine(
+        inline fun <A, B, C, reified D> Kontext.combine(
             a: K<A>,
             b: K<B>,
             c: K<C>,
-            f: (A, B, C) -> D
-        ): K<D> = this.combine(combine(a, b, ::Pair), c) { (a, b), c -> f(a, b, c) }
+            crossinline f: (A, B, C) -> D
+        ): K<D> =
+            this.combine(combine(a, b, ::Pair), c) { (a, b), c -> f(a, b, c) }
 
         /**
          * Syntactic sugar for nested [Kontext.combine]s
          */
-        fun <A, B, C, D, E> Kontext.combine(a: K<A>, b: K<B>, c: K<C>, d: K<D>, f: (A, B, C, D) -> E): K<E> =
+        inline fun <A, B, C, D, reified E> Kontext.combine(
+            a: K<A>,
+            b: K<B>,
+            c: K<C>,
+            d: K<D>,
+            crossinline f: (A, B, C, D) -> E
+        ): K<E> =
             this.combine(combine(a, b, c, ::Triple), d) { (a, b, c), d -> f(a, b, c, d) }
 
     }
@@ -52,5 +61,10 @@ sealed interface Kontext {
      * @param value is the final result of this computation or `null` if it could not be computed
      * @param dependencies are all the dependencies that were required for this computation
      */
-    data class K<A>(val errors: List<String>, val value: A?, val dependencies: Set<Dependency>)
+    data class K<A>(
+        val errors: List<String>,
+        val value: A?,
+        val valueType: Class<A>,
+        val dependencies: Set<Dependency<*>>
+    )
 }

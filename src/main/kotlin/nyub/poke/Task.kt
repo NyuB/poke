@@ -1,11 +1,11 @@
 package nyub.poke
 
 fun interface Task {
-    fun execute(kontext: Kontext): Kontext.K<Map<OutputKey, Any>>
+    fun Kontext.execute(): Map<NodeKey, Kontext.K<*>>
 
     companion object {
-        fun Task.parents(): Set<Dependency> {
-            return this.execute(DependencyKontext).dependencies
+        fun Task.parents(): Set<Dependency<*>> {
+            return DependencyKontext.execute().values.flatMap(Kontext.K<*>::dependencies).toSet()
         }
     }
 }

@@ -1,5 +1,5 @@
 package nyub.poke
 
 object Store {
-    fun empty(): MutableMap<NodeKey, Map<OutputKey, Any>> = mutableMapOf()
+    fun empty(): MutableMap<NodeKey, Any> = mutableMapOf()
 }
