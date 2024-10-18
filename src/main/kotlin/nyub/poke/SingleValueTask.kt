@@ -1,5 +1,8 @@
 package nyub.poke
 
+/**
+ * A task that only produces a single [value] without dependency
+ */
 data class SingleValueTask<A : Any>(private val value: A, private val key: NodeKey) : Task {
   override fun Kontext.execute(): Map<NodeKey, Kontext.K<*>> {
     return mapOf(key to one(value::class.java as Class<A>) { value })
