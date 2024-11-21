@@ -1,6 +1,5 @@
 package nyub.poke
 
-import kotlin.test.assertEquals
 import nyub.poke.Description.Combine.Companion.combine
 import nyub.poke.Description.Fetch.Companion.fetch
 import nyub.poke.Description.Map.Companion.map
@@ -8,7 +7,7 @@ import nyub.poke.Description.One.Companion.one
 import nyub.poke.Execution.Companion.execute
 import org.junit.jupiter.api.Test
 
-class DemoTest {
+class DemoTest : WithAssertExtensions {
   private val adder = Task {
     val left = fetch(Integer::class.java, "Inputs::left")
     val right = fetch(Integer::class.java, "Inputs::right")
@@ -67,6 +66,4 @@ class DemoTest {
             "rightHexa" to listOf("Inputs::right is not a member of the task graph"),
         )
   }
-
-  private infix fun <T> T.`is equal to`(other: T) = assertEquals(other, this)
 }
