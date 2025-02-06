@@ -3,10 +3,9 @@ package nyub.poke
 import nyub.poke.Description.Combine.Companion.combine
 import nyub.poke.Description.Fetch.Companion.fetch
 import nyub.poke.Description.One.Companion.one
-import nyub.poke.Execution.Companion.execute
 import org.junit.jupiter.api.Test
 
-class IsolatedExecutionTest : WithAssertExtensions {
+class TaskGraphTest : WithAssertExtensions {
   private val concatenation = Task {
     val left = fetch<String>("left")
     val right = fetch<String>("right")
@@ -34,8 +33,7 @@ class IsolatedExecutionTest : WithAssertExtensions {
                         "right" to "a"["str"],
                         "separator" to "a"["str"],
                     )))
-    graph.executions["concat"]!!.execute(concatenation) `is equal to`
-        mapOf("result" to Try.success("AAA"))
+    graph.execute("concat") `is equal to` mapOf("result" to Try.success("AAA"))
   }
 
   @Test
@@ -55,8 +53,7 @@ class IsolatedExecutionTest : WithAssertExtensions {
                         "right" to "b"["str"],
                         "separator" to "comma"["str"],
                     )))
-    graph.executions["concat"]!!.execute(concatenation) `is equal to`
-        mapOf("result" to Try.success("A,B"))
+    graph.execute("concat") `is equal to` mapOf("result" to Try.success("A,B"))
   }
 
   operator fun String.get(key: String): Pair<String, String> = this to key
