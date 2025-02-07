@@ -11,17 +11,17 @@ interface Execution {
 
   fun <A : Any> executeFetch(fetch: Description.Fetch<A>): Try<A>
 
+  fun <A : Any> execute(description: Description<A>): Try<A> =
+      when (description) {
+        is Description.Combine<*, *, A> -> executeCombine(description)
+        is Description.Map<*, A> -> executeMap(description)
+        is Description.Fetch -> executeFetch(description)
+        is Description.One -> executeOne(description)
+      }
+
   companion object {
     fun Execution.execute(task: Task): Map<String, Try<Any>> =
         task.describe().mapValues { execute(it.value) }
-
-    fun <A : Any> Execution.execute(description: Description<A>): Try<A> =
-        when (description) {
-          is Description.Combine<*, *, A> -> executeCombine(description)
-          is Description.Map<*, A> -> executeMap(description)
-          is Description.Fetch -> executeFetch(description)
-          is Description.One -> executeOne(description)
-        }
   }
 
   private fun <C : Any> executeCombine(combine: Description.Combine<*, *, C>): Try<C> {
