@@ -1,6 +1,5 @@
 package nyub.poke
 
-import nyub.poke.Execution.Companion.execute
 import nyub.poke.Try.Companion.flatten
 
 class InMemoryExecution(private val taskGraph: Map<String, Task>) : Execution {
