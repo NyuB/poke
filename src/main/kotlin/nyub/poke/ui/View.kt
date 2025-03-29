@@ -62,7 +62,7 @@ class View(
         }
   }
 
-  inner class LinkView(link: Model.Link) : JButton() {
+  private inner class LinkView(link: Model.Link) : JButton() {
     init {
       text = "${link.taskId}::${link.inputId} => ${link.linked}"
       background =
@@ -74,13 +74,16 @@ class View(
     }
   }
 
-  inner class TasksView : JPanel(GridBagLayout()) {
+  private inner class TasksView : JPanel(GridBagLayout()) {
     init {
       val graph =
           model.tasks
               .map {
                 it.key to
-                    model.links.filter { link -> link.taskId == it.key }.map { it.linked }.toSet()
+                    model.links
+                        .filter { link -> link.taskId == it.key }
+                        .map(Model.Linking::linked)
+                        .toSet()
               }
               .toMap()
       val sorted = topologicalSort(graph)
@@ -107,7 +110,7 @@ class View(
    *  -------------------
    *  ```
    */
-  inner class TaskView(taskId: String) : JPanel(GridBagLayout()) {
+  private inner class TaskView(taskId: String) : JPanel(GridBagLayout()) {
     init {
       val task = model.tasks[taskId]!!
       val type = task.describe().type
@@ -142,7 +145,7 @@ class View(
         }
   }
 
-  inner class BakeriesView : JPanel(GridBagLayout()) {
+  private inner class BakeriesView : JPanel(GridBagLayout()) {
     init {
       taskBakeries.forEachIndexed { n, it ->
         val bakeryComponent = it.taskComponent { id, task -> send(Update.AddTask(id, task)) }
@@ -150,20 +153,31 @@ class View(
       }
     }
 
-    fun bakeryN(n: Int) =
+    private fun bakeryN(n: Int) =
         GridBagConstraintsBase().apply {
           gridx = 0
           gridy = n
         }
   }
 
-  fun taskButton(taskId: TaskId, type: Class<*>) =
+  private fun taskButton(taskId: TaskId, type: Class<*>) =
       JButton("$taskId: ${type.simpleName}").apply {
         val defaultColor = background
         background =
             if (this@View.model.selection.outputSelection?.task == taskId) Color.ORANGE
             else defaultColor
         addMouseListener(TaskButtonListener(taskId))
+      }
+
+  private fun inputButton(taskId: TaskId, inputId: InputId, type: Class<*>) =
+      JButton("$inputId: ${type.simpleName}").apply {
+        val defaultColor = background
+        background =
+            if (this@View.model.selection.inputSelection?.task == taskId &&
+                this@View.model.selection.inputSelection.input == inputId)
+                Color.ORANGE
+            else defaultColor
+        addActionListener { send(Update.SelectTaskInput(taskId, inputId)) }
       }
 
   private inner class TaskButtonListener(val taskId: String) : MouseListener {
@@ -186,25 +200,14 @@ class View(
     override fun mouseExited(e: MouseEvent?) = Unit
   }
 
-  fun inputButton(taskId: TaskId, inputId: InputId, type: Class<*>) =
-      JButton("$inputId: ${type.simpleName}").apply {
-        val defaultColor = background
-        background =
-            if (this@View.model.selection.inputSelection?.task == taskId &&
-                this@View.model.selection.inputSelection.input == inputId)
-                Color.ORANGE
-            else defaultColor
-        addActionListener { send(Update.SelectTaskInput(taskId, inputId)) }
-      }
-
-  class GridBagConstraintsBase : GridBagConstraints() {
+  private class GridBagConstraintsBase : GridBagConstraints() {
     init {
       fill = BOTH
       anchor = FIRST_LINE_START
     }
   }
 
-  fun JPanel.padded(): JPanel {
+  private fun JPanel.padded(): JPanel {
     return object : JPanel(FlowLayout(FlowLayout.CENTER, 3, 3)) {
       init {
         add(this@padded)
