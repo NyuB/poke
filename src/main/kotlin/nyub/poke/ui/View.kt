@@ -1,6 +1,8 @@
 package nyub.poke.ui
 
 import java.awt.*
+import java.awt.event.MouseEvent
+import java.awt.event.MouseListener
 import javax.swing.JButton
 import javax.swing.JPanel
 import nyub.poke.InputId
@@ -161,8 +163,28 @@ class View(
         background =
             if (this@View.model.selection.outputSelection?.task == taskId) Color.ORANGE
             else defaultColor
-        addActionListener { send(Update.SelectTaskOutput(taskId)) }
+        addMouseListener(TaskButtonListener(taskId))
       }
+
+  private inner class TaskButtonListener(val taskId: String) : MouseListener {
+    override fun mouseClicked(e: MouseEvent) =
+        when (e.button) {
+          // Left click
+          MouseEvent.BUTTON1 -> send(Update.SelectTaskOutput(taskId))
+          // Right click
+          MouseEvent.BUTTON3 -> send(Update.RemoveTask(taskId))
+          // Nothing to do for other buttons
+          else -> Unit
+        }
+
+    override fun mousePressed(e: MouseEvent?) = Unit
+
+    override fun mouseReleased(e: MouseEvent?) = Unit
+
+    override fun mouseEntered(e: MouseEvent?) = Unit
+
+    override fun mouseExited(e: MouseEvent?) = Unit
+  }
 
   fun inputButton(taskId: TaskId, inputId: InputId, type: Class<*>) =
       JButton("$inputId: ${type.simpleName}").apply {

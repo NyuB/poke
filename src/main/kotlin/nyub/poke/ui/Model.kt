@@ -60,6 +60,13 @@ class Model(val tasks: Map<TaskId, Task>, links: List<Linking>, val selection: S
     return Model(tasks + Pair(id, task), links, selection)
   }
 
+  fun removeTask(id: TaskId): Model {
+    return Model(
+        tasks.filter { it.key != id },
+        links.filter { it.taskId != id && it.linked != id },
+        Selection.nothing())
+  }
+
   fun select(taskOutput: TaskOutputSelection): Model {
     if (selection.outputSelection == null) {
       val nextSelection = selection.copy(outputSelection = taskOutput)

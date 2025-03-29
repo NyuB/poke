@@ -13,6 +13,8 @@ object Update {
 
   data class AddTask(val id: String, val task: Task) : Message
 
+  data class RemoveTask(val id: TaskId) : Message
+
   data class SelectTaskInput(val taskId: TaskId, val inputId: InputId) : Message
 
   data class SelectTaskOutput(val taskId: TaskId) : Message
@@ -24,6 +26,7 @@ object Update {
       is SelectTaskInput -> model.select(Model.TaskInputSelection(msg.taskId, msg.inputId))
       is SelectTaskOutput -> model.select(Model.TaskOutputSelection(msg.taskId))
       is RemoveLink -> model.removeLink(msg.link)
+      is RemoveTask -> model.removeTask(msg.id)
     }
   }
 }
