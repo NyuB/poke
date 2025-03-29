@@ -49,7 +49,7 @@ class View(
         }
   }
 
-  class LinkView(link: Model.Link) : JButton() {
+  inner class LinkView(link: Model.Link) : JButton() {
     init {
       text = "${link.taskId}::${link.inputId} => ${link.linked}"
       background =
@@ -57,6 +57,7 @@ class View(
             is Model.ValidLink -> Color.GREEN
             is Model.InvalidLink -> Color.RED
           }
+      addActionListener { send(Update.RemoveLink(link)) }
     }
   }
 

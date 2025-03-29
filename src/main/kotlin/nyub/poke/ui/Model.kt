@@ -14,6 +14,10 @@ class Model(val tasks: Map<TaskId, Task>, links: List<Linking>, val selection: S
     fun invalid(): InvalidLink = InvalidLink(taskId, inputId, linked)
 
     fun valid(): ValidLink = ValidLink(taskId, inputId, linked)
+
+    fun same(other: Linking): Boolean {
+      return taskId == other.taskId && inputId == other.inputId && linked == other.linked
+    }
   }
 
   sealed interface Link : Linking
@@ -49,6 +53,8 @@ class Model(val tasks: Map<TaskId, Task>, links: List<Linking>, val selection: S
       }
 
   fun addLink(link: Linking): Model = Model(tasks, links + link, Selection.nothing())
+
+  fun removeLink(link: Linking): Model = Model(tasks, links.filter { !it.same(link) }, selection)
 
   fun addTask(id: TaskId, task: Task): Model {
     return Model(tasks + Pair(id, task), links, selection)
