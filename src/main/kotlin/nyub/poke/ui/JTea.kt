@@ -1,8 +1,8 @@
 package nyub.poke.ui
 
 import java.awt.Dimension
+import javax.swing.JComponent
 import javax.swing.JFrame
-import javax.swing.JPanel
 
 typealias MessageReceiver<Message> = (Message) -> Unit
 
@@ -10,7 +10,7 @@ typealias MessageReceiver<Message> = (Message) -> Unit
 class JTea<Model, Msg>(
     init: Model,
     val update: (Model, Msg) -> Model,
-    val view: (Model, MessageReceiver<Msg>) -> JPanel
+    val view: (Model, MessageReceiver<Msg>) -> JComponent
 ) : JFrame("App") {
   private var model = init
 

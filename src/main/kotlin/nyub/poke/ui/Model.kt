@@ -5,7 +5,12 @@ import nyub.poke.InputId
 import nyub.poke.Task
 import nyub.poke.TaskId
 
-class Model(val tasks: Map<TaskId, Task>, links: List<Linking>, val selection: Selection) {
+class Model(
+    val tasks: Map<TaskId, Task>,
+    links: List<Linking>,
+    val selection: Selection,
+    val results: Map<String, *>
+) {
   interface Linking {
     val taskId: TaskId
     val inputId: InputId
@@ -52,19 +57,27 @@ class Model(val tasks: Map<TaskId, Task>, links: List<Linking>, val selection: S
         } else it.invalid()
       }
 
-  fun addLink(link: Linking): Model = Model(tasks, links + link, Selection.nothing())
+  fun addLink(link: Linking): Model = Model(tasks, links + link, Selection.nothing(), results)
 
-  fun removeLink(link: Linking): Model = Model(tasks, links.filter { !it.same(link) }, selection)
+  fun removeLink(link: Linking): Model =
+      Model(tasks, links.filter { !it.same(link) }, selection, results)
 
   fun addTask(id: TaskId, task: Task): Model {
-    return Model(tasks + Pair(id, task), links, selection)
+    return Model(tasks + Pair(id, task), links, selection, results)
+  }
+
+  fun addResult(id: TaskId, result: Any): Model {
+    val resultsCopy = results.toMutableMap()
+    resultsCopy[id] = result
+    return Model(tasks, links, selection, resultsCopy)
   }
 
   fun removeTask(id: TaskId): Model {
     return Model(
         tasks.filter { it.key != id },
         links.filter { it.taskId != id && it.linked != id },
-        Selection.nothing())
+        Selection.nothing(),
+        results)
   }
 
   fun select(taskOutput: TaskOutputSelection): Model {
@@ -73,7 +86,7 @@ class Model(val tasks: Map<TaskId, Task>, links: List<Linking>, val selection: S
       if (nextSelection.outputSelection != null && nextSelection.inputSelection != null) {
         return addLink(nextSelection.toLink())
       }
-      return Model(tasks, links, nextSelection)
+      return Model(tasks, links, nextSelection, results)
     } else {
       val nextSelection =
           if (selection.outputSelection == taskOutput) {
@@ -81,7 +94,7 @@ class Model(val tasks: Map<TaskId, Task>, links: List<Linking>, val selection: S
           } else {
             selection.copy(outputSelection = taskOutput)
           }
-      return Model(tasks, links, nextSelection)
+      return Model(tasks, links, nextSelection, results)
     }
   }
 
@@ -91,7 +104,7 @@ class Model(val tasks: Map<TaskId, Task>, links: List<Linking>, val selection: S
       if (nextSelection.outputSelection != null && nextSelection.inputSelection != null) {
         return addLink(nextSelection.toLink())
       }
-      return Model(tasks, links, nextSelection)
+      return Model(tasks, links, nextSelection, results)
     } else {
       val nextSelection =
           if (selection.inputSelection == taskInput) {
@@ -99,7 +112,7 @@ class Model(val tasks: Map<TaskId, Task>, links: List<Linking>, val selection: S
           } else {
             selection.copy(inputSelection = taskInput)
           }
-      return Model(tasks, links, nextSelection)
+      return Model(tasks, links, nextSelection, results)
     }
   }
 

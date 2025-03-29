@@ -14,7 +14,7 @@ fun main() {
     combine(left, right) { l, r -> l + r }
   }
   val uppercase = Task { fetch<String>("string").map { it.uppercase() } }
-  val a = Task { one { "A" } }
+  val a = Task { one { "a" } }
   val dots = Task { one { "::" } }
   val length = Task { fetch<String>("string").map(String::length) }
   val tasks =
@@ -31,9 +31,10 @@ fun main() {
         register(TypeRepresentation(Integer::class.java, { JLabel(Icons.integer) }))
       }
   val frame =
-      JTea(Model(emptyMap(), emptyList(), Model.Selection.nothing()), Update::invoke) { model, send
-        ->
-        View(model, register, send, tasks.map { TaskBakery.of(it.key, it.value) })
-      }
+      JTea(
+          Model(emptyMap(), emptyList(), Model.Selection.nothing(), emptyMap<String, Any>()),
+          Update::invoke) { model, send ->
+            View(model, register, send, tasks.map { TaskBakery.of(it.key, it.value) })
+          }
   frame.isVisible = true
 }

@@ -6,9 +6,24 @@ import java.awt.event.MouseListener
 import javax.swing.BorderFactory
 import javax.swing.JButton
 import javax.swing.JPanel
+import javax.swing.JTabbedPane
 import javax.swing.border.AbstractBorder
 import nyub.poke.InputId
 import nyub.poke.TaskId
+
+class View(
+    appModel: Model,
+    representationRegister: RepresentationRegister,
+    send: MessageReceiver<Update.Message>,
+    taskBakeries: List<TaskBakery>,
+) : JTabbedPane() {
+  init {
+    add("Tasks", TaskDefinitionView(appModel, representationRegister, send, taskBakeries))
+    appModel.results.forEach {
+      add(it.key, representationRegister.componentForValue(it.value ?: "null"))
+    }
+  }
+}
 
 /**
  * ```
@@ -21,7 +36,7 @@ import nyub.poke.TaskId
  * | ...            | ...            |
  * ```
  */
-class View(
+class TaskDefinitionView(
     private val model: Model,
     val representationRegister: RepresentationRegister,
     val send: MessageReceiver<Update.Message>,
@@ -117,12 +132,12 @@ class View(
       val task = model.tasks[taskId]!!
       val type = task.describe().type
       add(taskButton(taskId), headerTitle())
-      add(representationRegister.componentFor(type), headerType())
+      add(representationRegister.componentForType(type), headerType())
 
       val inputs = model.inputs[taskId]!!
       inputs.forEachIndexed { n, it ->
         add(inputButton(taskId, it.key), inputN(n))
-        add(representationRegister.componentFor(it.type), typeN(n))
+        add(representationRegister.componentForType(it.type), typeN(n))
       }
     }
 
@@ -172,7 +187,8 @@ class View(
       JButton(taskId).apply {
         val defaultColor = background
         background =
-            if (this@View.model.selection.outputSelection?.task == taskId) Color.ORANGE
+            if (this@TaskDefinitionView.model.selection.outputSelection?.task == taskId)
+                Color.ORANGE
             else defaultColor
         addMouseListener(TaskButtonListener(taskId))
       }
@@ -181,8 +197,8 @@ class View(
       JButton(inputId).apply {
         val defaultColor = background
         background =
-            if (this@View.model.selection.inputSelection?.task == taskId &&
-                this@View.model.selection.inputSelection.input == inputId)
+            if (this@TaskDefinitionView.model.selection.inputSelection?.task == taskId &&
+                this@TaskDefinitionView.model.selection.inputSelection.input == inputId)
                 Color.ORANGE
             else defaultColor
         addActionListener { send(Update.SelectTaskInput(taskId, inputId)) }
@@ -196,6 +212,8 @@ class View(
           MouseEvent.BUTTON1 -> send(Update.SelectTaskOutput(taskId))
           // Right click
           MouseEvent.BUTTON3 -> send(Update.RemoveTask(taskId))
+          // Middle click
+          MouseEvent.BUTTON2 -> send(Update.ExecuteTask(taskId))
           // Nothing to do for other buttons
           else -> Unit
         }
