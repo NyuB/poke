@@ -8,17 +8,16 @@ import nyub.poke.Description.One.Companion.one
 import nyub.poke.Task
 
 fun main() {
-  val tasks =
-      mapOf(
-          "Concat" to
-              Task {
-                val left = fetch<String>("left")
-                val right = fetch<String>("right")
-                combine(left, right) { l, r -> l + r }
-              },
-          "Uppercase" to Task { fetch<String>("string").map { it.uppercase() } },
-          "a" to Task { one { "A" } },
-          "Dots" to Task { one { "::" } })
+  val concat = Task {
+    val left = fetch<String>("left")
+    val right = fetch<String>("right")
+    combine(left, right) { l, r -> l + r }
+  }
+  val uppercase = Task { fetch<String>("string").map { it.uppercase() } }
+  val a = Task { one { "A" } }
+  val dots = Task { one { "::" } }
+
+  val tasks = mapOf("Concat" to concat, "Uppercase" to uppercase, "a" to a, "Dots" to dots)
   val links =
       listOf(
           Model.TryLink("Concat", "left", "Dots"),
@@ -31,7 +30,7 @@ fun main() {
       }
   val frame =
       JTea(Model(tasks, links, Model.Selection.nothing()), Update::invoke) { model, send ->
-        View(model, register, send)
+        View(model, register, send, tasks.map { TaskBakery.of(it.key, it.value) })
       }
   frame.isVisible = true
 }

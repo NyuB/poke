@@ -9,32 +9,43 @@ import nyub.poke.TaskId
 /**
  * ```
  *        4/5          1/5
- *  ------------------------
- * | Task#0 Task#1  |link#0 |
- * | Task#2 Task#3  |link#1 |
- * | ...            | ...   |
+ *  ----------------------------------
+ * | Task#0 Task#1  |link#0          |
+ * | Task#2 Task#3  | ...            |
+ * | ...            |----------------|
+ * | ...            | TaskBakery#0   |
+ * | ...            | ...            |
  * ```
  */
 class View(
     private val model: Model,
     val representationRegister: RepresentationRegister,
-    val send: MessageReceiver<Update.Message>
+    val send: MessageReceiver<Update.Message>,
+    val taskBakeries: List<TaskBakery>,
 ) : JPanel(GridBagLayout()) {
   init {
     add(TasksView().padded(), tasks())
     add(LinksView().padded(), links())
+    add(BakeriesView().padded(), bakeries())
   }
 
   private fun tasks() =
       GridBagConstraintsBase().apply {
         gridx = 0
         gridy = 0
+        gridheight = 2
       }
 
   private fun links() =
       GridBagConstraintsBase().apply {
         gridx = 1
         gridy = 0
+      }
+
+  private fun bakeries() =
+      GridBagConstraintsBase().apply {
+        gridx = 1
+        gridy = 1
       }
 
   inner class LinksView : JPanel(GridBagLayout()) {
@@ -126,6 +137,21 @@ class View(
           gridwidth = 1
           gridx = 1
           gridy = n + 1
+        }
+  }
+
+  inner class BakeriesView : JPanel(GridBagLayout()) {
+    init {
+      taskBakeries.forEachIndexed { n, it ->
+        val bakeryComponent = it.taskComponent { id, task -> send(Update.AddTask(id, task)) }
+        add(bakeryComponent, bakeryN(n))
+      }
+    }
+
+    fun bakeryN(n: Int) =
+        GridBagConstraintsBase().apply {
+          gridx = 0
+          gridy = n
         }
   }
 
