@@ -3,8 +3,10 @@ package nyub.poke.ui
 import java.awt.*
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
+import javax.swing.BorderFactory
 import javax.swing.JButton
 import javax.swing.JPanel
+import javax.swing.border.AbstractBorder
 import nyub.poke.InputId
 import nyub.poke.TaskId
 
@@ -184,6 +186,7 @@ class View(
                 Color.ORANGE
             else defaultColor
         addActionListener { send(Update.SelectTaskInput(taskId, inputId)) }
+        border = BorderFactory.createCompoundBorder(PinBorder(), border)
       }
 
   private inner class TaskButtonListener(val taskId: String) : MouseListener {
@@ -219,5 +222,23 @@ class View(
         add(this@padded)
       }
     }
+  }
+
+  class PinBorder : AbstractBorder() {
+    override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+      g.fillOval(x, y, 10, 10)
+    }
+
+    override fun getBorderInsets(c: Component?): Insets {
+      return Insets(0, 10, 0, 0)
+    }
+
+    override fun getBorderInsets(c: Component, insets: Insets): Insets =
+        insets.apply {
+          top = 0
+          right = 0
+          bottom = 0
+          left = 10
+        }
   }
 }
