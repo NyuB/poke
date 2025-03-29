@@ -20,8 +20,7 @@ interface Execution {
       }
 
   companion object {
-    fun Execution.execute(task: Task): Map<String, Try<Any>> =
-        task.describe().mapValues { execute(it.value) }
+    fun Execution.execute(task: Task): Try<Any> = execute(task.describe())
   }
 
   private fun <C : Any> executeCombine(combine: Description.Combine<*, *, C>): Try<C> {

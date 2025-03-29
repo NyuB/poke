@@ -10,6 +10,9 @@ sealed interface Description<A> {
 
       inline fun <reified A : Any> one(noinline value: () -> A): Description<A> =
           One(A::class.java, value)
+
+      inline fun <reified A : Any> constant(value: A): Description<A> =
+          One(A::class.java, { value })
     }
   }
 

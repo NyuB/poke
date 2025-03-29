@@ -12,7 +12,5 @@ object Dependencies {
         is Description.One<*> -> emptySet()
       }
 
-  @JvmStatic
-  fun track(task: Task): Set<Dependency<*>> =
-      task.describe().values.fold(emptySet()) { acc, item -> acc + track(item) }
+  @JvmStatic fun track(task: Task): Set<Dependency<*>> = track(task.describe())
 }

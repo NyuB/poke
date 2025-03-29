@@ -3,30 +3,23 @@ package nyub.poke
 import nyub.poke.Try.Companion.flatten
 
 class InMemoryExecution(private val taskGraph: Map<String, Task>) : Execution {
-  override fun <A : Any> executeFetch(fetch: Description.Fetch<A>): Try<A> {
-    return Try.attempt {
-          val (left, right) = fetch.key.split("::")
-          fetchDescription(left, right, fetch.type).flatMap { description -> execute(description) }
-        }
-        .flatten()
-  }
+  override fun <A : Any> executeFetch(fetch: Description.Fetch<A>): Try<A> =
+      Try.attempt {
+            fetchDescription(fetch.key, fetch.type).flatMap { description -> execute(description) }
+          }
+          .flatten()
 
-  private fun <A : Any> fetchDescription(
-      taskKey: String,
-      outputKey: String,
-      type: Class<A>
-  ): Try<Description<A>> {
+  private fun <A : Any> fetchDescription(taskKey: String, type: Class<A>): Try<Description<A>> {
     val output =
-        taskGraph[taskKey]?.describe()?.get(outputKey)
+        taskGraph[taskKey]?.describe()
             ?: return Try.failure(
-                IllegalArgumentException("$taskKey::$outputKey is not a member of the task graph"))
+                IllegalArgumentException("$taskKey is not a member of the task graph"))
 
     return if (type.isAssignableFrom(output.type)) {
       Try.success(output as Description<A>)
     } else {
       Try.failure(
-          IllegalArgumentException(
-              "$taskKey::$outputKey has type ${output.type} but $type was expected"))
+          IllegalArgumentException("$taskKey has type ${output.type} but $type was expected"))
     }
   }
 }
