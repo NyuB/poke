@@ -3,7 +3,6 @@ package nyub.poke.ui
 import java.awt.*
 import javax.swing.JButton
 import javax.swing.JPanel
-import kotlin.math.sqrt
 import nyub.poke.InputId
 import nyub.poke.TaskId
 
@@ -62,16 +61,24 @@ class View(
   }
 
   inner class TasksView : JPanel(GridBagLayout()) {
-    val taskPerRow = sqrt(model.tasks.size.toDouble()).toInt().takeIf { it > 0 } ?: 1
-
     init {
-      model.tasks.keys.forEachIndexed { n, it -> add(TaskView(it).padded(), taskN(n)) }
+      val graph =
+          model.tasks
+              .map {
+                it.key to
+                    model.links.filter { link -> link.taskId == it.key }.map { it.linked }.toSet()
+              }
+              .toMap()
+      val sorted = topologicalSort(graph)
+      sorted.forEachIndexed { j, ids ->
+        ids.forEachIndexed { i, id -> add(TaskView(id).padded(), taskN(i, j)) }
+      }
     }
 
-    private fun taskN(n: Int) =
+    private fun taskN(i: Int, j: Int) =
         GridBagConstraintsBase().apply {
-          gridx = n % taskPerRow
-          gridy = n / taskPerRow
+          gridx = j
+          gridy = i
         }
   }
 
