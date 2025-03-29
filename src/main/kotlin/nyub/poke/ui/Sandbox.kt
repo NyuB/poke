@@ -24,6 +24,13 @@ fun main() {
           "a" to a,
           "Dots" to dots,
           "Length" to length)
+  val bakeries =
+      tasks.map { TaskBakery.of(it.key, it.value) } +
+          listOf(
+              TaskBakery.constant("string"),
+              TaskBakery.constant("int", String::toInt),
+              TaskBakery.constant("double", String::toDouble),
+          )
   val register =
       RepresentationRegister().apply {
         register(TypeRepresentation(String::class.java, { JLabel(Icons.string) }))
@@ -34,7 +41,7 @@ fun main() {
       JTea(
           Model(emptyMap(), emptyList(), Model.Selection.nothing(), emptyMap<String, Any>()),
           Update::invoke) { model, send ->
-            View(model, register, send, tasks.map { TaskBakery.of(it.key, it.value) })
+            View(model, register, send, bakeries)
           }
   frame.isVisible = true
 }
