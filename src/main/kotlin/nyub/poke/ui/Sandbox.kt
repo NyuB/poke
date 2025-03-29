@@ -16,20 +16,23 @@ fun main() {
   val uppercase = Task { fetch<String>("string").map { it.uppercase() } }
   val a = Task { one { "A" } }
   val dots = Task { one { "::" } }
-
-  val tasks = mapOf("Concat" to concat, "Uppercase" to uppercase, "a" to a, "Dots" to dots)
-  val links =
-      listOf(
-          Model.TryLink("Concat", "left", "Dots"),
-          Model.TryLink("Concat", "right", "Uppercase"),
-          Model.TryLink("Uppercase", "string", "a"),
-      )
+  val length = Task { fetch<String>("string").map(String::length) }
+  val tasks =
+      mapOf(
+          "Concat" to concat,
+          "Uppercase" to uppercase,
+          "a" to a,
+          "Dots" to dots,
+          "Length" to length)
   val register =
       RepresentationRegister().apply {
         register(TypeRepresentation(String::class.java, { JLabel(Icons.string) }))
+        register(TypeRepresentation(Int::class.java, { JLabel(Icons.integer) }))
+        register(TypeRepresentation(Integer::class.java, { JLabel(Icons.integer) }))
       }
   val frame =
-      JTea(Model(tasks, links, Model.Selection.nothing()), Update::invoke) { model, send ->
+      JTea(Model(emptyMap(), emptyList(), Model.Selection.nothing()), Update::invoke) { model, send
+        ->
         View(model, register, send, tasks.map { TaskBakery.of(it.key, it.value) })
       }
   frame.isVisible = true

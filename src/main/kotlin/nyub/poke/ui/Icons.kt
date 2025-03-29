@@ -5,6 +5,7 @@ import javax.swing.ImageIcon
 
 object Icons {
   @JvmStatic val string: ImageIcon = scaledIcon("str.png")
+  @JvmStatic val integer: ImageIcon = scaledIcon("int.png")
 
   @JvmStatic
   fun scaledIcon(path: String): ImageIcon {

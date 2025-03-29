@@ -114,19 +114,25 @@ class View(
     init {
       val task = model.tasks[taskId]!!
       val type = task.describe().type
-      add(taskButton(taskId, type), header())
+      add(taskButton(taskId), headerTitle())
+      add(representationRegister.componentFor(type), headerType())
 
       val inputs = model.inputs[taskId]!!
       inputs.forEachIndexed { n, it ->
-        add(inputButton(taskId, it.key, it.type), inputN(n))
+        add(inputButton(taskId, it.key), inputN(n))
         add(representationRegister.componentFor(it.type), typeN(n))
       }
     }
 
-    private fun header() =
+    private fun headerTitle() =
         GridBagConstraintsBase().apply {
-          gridwidth = 2
           gridx = 0
+          gridy = 0
+        }
+
+    private fun headerType() =
+        GridBagConstraintsBase().apply {
+          gridx = 1
           gridy = 0
         }
 
@@ -160,8 +166,8 @@ class View(
         }
   }
 
-  private fun taskButton(taskId: TaskId, type: Class<*>) =
-      JButton("$taskId: ${type.simpleName}").apply {
+  private fun taskButton(taskId: TaskId) =
+      JButton(taskId).apply {
         val defaultColor = background
         background =
             if (this@View.model.selection.outputSelection?.task == taskId) Color.ORANGE
@@ -169,8 +175,8 @@ class View(
         addMouseListener(TaskButtonListener(taskId))
       }
 
-  private fun inputButton(taskId: TaskId, inputId: InputId, type: Class<*>) =
-      JButton("$inputId: ${type.simpleName}").apply {
+  private fun inputButton(taskId: TaskId, inputId: InputId) =
+      JButton(inputId).apply {
         val defaultColor = background
         background =
             if (this@View.model.selection.inputSelection?.task == taskId &&
