@@ -5,7 +5,7 @@ import nyub.poke.InputId
 import nyub.poke.Task
 import nyub.poke.TaskId
 
-class Model(val tasks: Map<TaskId, Task>, links: List<Linking>) {
+class Model(val tasks: Map<TaskId, Task>, links: List<Linking>, val selection: Selection) {
   interface Linking {
     val taskId: TaskId
     val inputId: InputId
@@ -48,9 +48,64 @@ class Model(val tasks: Map<TaskId, Task>, links: List<Linking>) {
         } else it.invalid()
       }
 
-  fun addLink(link: Linking): Model = Model(tasks, links + link)
+  fun addLink(link: Linking): Model = Model(tasks, links + link, Selection.nothing())
 
   fun addTask(id: TaskId, task: Task): Model {
-    return Model(tasks + Pair(id, task), links)
+    return Model(tasks + Pair(id, task), links, selection)
+  }
+
+  fun select(taskOutput: TaskOutputSelection): Model {
+    if (selection.outputSelection == null) {
+      val nextSelection = selection.copy(outputSelection = taskOutput)
+      if (nextSelection.outputSelection != null && nextSelection.inputSelection != null) {
+        return addLink(nextSelection.toLink())
+      }
+      return Model(tasks, links, nextSelection)
+    } else {
+      val nextSelection =
+          if (selection.outputSelection == taskOutput) {
+            selection.copy(outputSelection = null)
+          } else {
+            selection.copy(outputSelection = taskOutput)
+          }
+      return Model(tasks, links, nextSelection)
+    }
+  }
+
+  fun select(taskInput: TaskInputSelection): Model {
+    if (selection.inputSelection == null) {
+      val nextSelection = selection.copy(inputSelection = taskInput)
+      if (nextSelection.outputSelection != null && nextSelection.inputSelection != null) {
+        return addLink(nextSelection.toLink())
+      }
+      return Model(tasks, links, nextSelection)
+    } else {
+      val nextSelection =
+          if (selection.inputSelection == taskInput) {
+            selection.copy(inputSelection = null)
+          } else {
+            selection.copy(inputSelection = taskInput)
+          }
+      return Model(tasks, links, nextSelection)
+    }
+  }
+
+  data class TaskInputSelection(val task: TaskId, val input: InputId)
+
+  data class TaskOutputSelection(val task: TaskId)
+
+  data class Selection(
+      val inputSelection: TaskInputSelection?,
+      val outputSelection: TaskOutputSelection?
+  ) {
+    fun toLink() =
+        TryLink(
+            inputSelection?.task ?: "null",
+            inputSelection?.input ?: "null",
+            outputSelection?.task ?: "null")
+
+    companion object {
+      @JvmStatic fun nothing() = Selection(null, null)
+    }
   }
 }

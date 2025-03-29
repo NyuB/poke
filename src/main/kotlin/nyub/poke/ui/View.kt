@@ -4,6 +4,8 @@ import java.awt.*
 import javax.swing.JButton
 import javax.swing.JPanel
 import kotlin.math.sqrt
+import nyub.poke.InputId
+import nyub.poke.TaskId
 
 /**
  * ```
@@ -14,8 +16,11 @@ import kotlin.math.sqrt
  * | ...            | ...   |
  * ```
  */
-class View(private val model: Model, val representationRegister: RepresentationRegister) :
-    JPanel(GridBagLayout()) {
+class View(
+    private val model: Model,
+    val representationRegister: RepresentationRegister,
+    val send: MessageReceiver<Update.Message>
+) : JPanel(GridBagLayout()) {
   init {
     add(TasksView().padded(), tasks())
     add(LinksView().padded(), links())
@@ -84,12 +89,12 @@ class View(private val model: Model, val representationRegister: RepresentationR
   inner class TaskView(taskId: String) : JPanel(GridBagLayout()) {
     init {
       val task = model.tasks[taskId]!!
-      val description = task.describe().type
-      add(JButton("$taskId: ${description.simpleName}"), header())
+      val type = task.describe().type
+      add(taskButton(taskId, type), header())
 
       val inputs = model.inputs[taskId]!!
       inputs.forEachIndexed { n, it ->
-        add(JButton(it.key), inputN(n))
+        add(inputButton(taskId, it.key, it.type), inputN(n))
         add(representationRegister.componentFor(it.type), typeN(n))
       }
     }
@@ -115,6 +120,26 @@ class View(private val model: Model, val representationRegister: RepresentationR
           gridy = n + 1
         }
   }
+
+  fun taskButton(taskId: TaskId, type: Class<*>) =
+      JButton("$taskId: ${type.simpleName}").apply {
+        val defaultColor = background
+        background =
+            if (this@View.model.selection.outputSelection?.task == taskId) Color.ORANGE
+            else defaultColor
+        addActionListener { send(Update.SelectTaskOutput(taskId)) }
+      }
+
+  fun inputButton(taskId: TaskId, inputId: InputId, type: Class<*>) =
+      JButton("$inputId: ${type.simpleName}").apply {
+        val defaultColor = background
+        background =
+            if (this@View.model.selection.inputSelection?.task == taskId &&
+                this@View.model.selection.inputSelection.input == inputId)
+                Color.ORANGE
+            else defaultColor
+        addActionListener { send(Update.SelectTaskInput(taskId, inputId)) }
+      }
 
   class GridBagConstraintsBase : GridBagConstraints() {
     init {

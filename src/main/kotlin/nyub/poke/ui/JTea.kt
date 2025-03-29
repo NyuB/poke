@@ -23,5 +23,7 @@ class JTea<Model, Msg>(
   private fun receive(msg: Msg) {
     model = update(model, msg)
     contentPane = view(model, this::receive)
+
+    revalidate()
   }
 }

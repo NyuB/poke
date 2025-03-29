@@ -29,6 +29,9 @@ fun main() {
       RepresentationRegister().apply {
         register(TypeRepresentation(String::class.java, { JLabel(Icons.string) }))
       }
-  val frame = JTea(Model(tasks, links), Update::invoke) { model, _ -> View(model, register) }
+  val frame =
+      JTea(Model(tasks, links, Model.Selection.nothing()), Update::invoke) { model, send ->
+        View(model, register, send)
+      }
   frame.isVisible = true
 }
