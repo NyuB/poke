@@ -32,8 +32,9 @@ object Update {
             TaskGraph(
                 model.tasks,
                 model.links
+                    .filterIsInstance<Model.ValidLink>()
                     .groupBy { it.taskId }
-                    .mapValues { it.value.associate { it.inputId to it.linked } })
+                    .mapValues { it.value.associate { links -> links.inputId to links.linked } })
         when (val result = graph.execute(msg.taskId)) {
           is Try.Success -> model.addResult(msg.taskId, result.result)
           is Try.Failure ->
