@@ -13,20 +13,20 @@ fun interface TaskBakery {
 
   companion object {
     @JvmStatic
-    fun of(title: String, task: Task) = TaskBakery { send ->
-      SimpleTaskBakeryPanel(task, title, send)
+    fun of(prefix: String, task: Task) = TaskBakery { send ->
+      SimpleTaskBakeryPanel(task, prefix, send)
     }
   }
 
   private class SimpleTaskBakeryPanel(
       val task: Task,
-      title: String,
+      prefix: String,
       val send: (TaskId, Task) -> Unit
   ) : JPanel(GridLayout(1, 2)) {
     init {
       val text = JTextField()
-      val label = JLabel(title)
-      text.addActionListener { send(text.text, task) }
+      val label = JLabel(prefix)
+      text.addActionListener { send("$prefix[${text.text}]", task) }
       add(label)
       add(text)
     }
