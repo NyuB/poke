@@ -57,7 +57,7 @@ class TaskGraphTest : WithAssertExtensions {
   }
 
   @Test
-  fun `caching problem`() {
+  fun `task output is cached`() {
     var executionCount = 0
 
     val taskThatShouldBeExecutedOnce = Task {
@@ -81,6 +81,6 @@ class TaskGraphTest : WithAssertExtensions {
 
     graph.execute("up") `is equal to` Try.success("A")
     graph.execute("dup") `is equal to` Try.success("a::a")
-    executionCount `is equal to` 2
+    executionCount `is equal to` 1
   }
 }
