@@ -2,6 +2,7 @@ package nyub.poke
 
 import nyub.poke.Description.Combine.Companion.combine
 import nyub.poke.Description.Fetch.Companion.fetch
+import nyub.poke.Description.Map.Companion.map
 import nyub.poke.Description.One.Companion.one
 import org.junit.jupiter.api.Test
 
@@ -55,5 +56,31 @@ class TaskGraphTest : WithAssertExtensions {
     graph.execute("concat") `is equal to` Try.success("A,B")
   }
 
-  operator fun String.get(key: String): Pair<String, String> = this to key
+  @Test
+  fun `caching problem`() {
+    var executionCount = 0
+
+    val taskThatShouldBeExecutedOnce = Task {
+      one {
+        executionCount++
+        "a"
+      }
+    }
+
+    val duplicate = Task { fetch<String>("string").map { "$it::$it" } }
+
+    val uppercase = Task { fetch<String>("string").map(String::uppercase) }
+
+    val graph =
+        TaskGraph(
+            mapOf("string" to taskThatShouldBeExecutedOnce, "dup" to duplicate, "up" to uppercase),
+            mapOf(
+                "dup" to mapOf("string" to "string"),
+                "up" to mapOf("string" to "string"),
+            ))
+
+    graph.execute("up") `is equal to` Try.success("A")
+    graph.execute("dup") `is equal to` Try.success("a::a")
+    executionCount `is equal to` 2
+  }
 }
