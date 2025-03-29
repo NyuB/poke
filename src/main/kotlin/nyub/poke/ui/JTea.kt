@@ -21,9 +21,16 @@ class JTea<Model, Msg>(
   }
 
   private fun receive(msg: Msg) {
-    model = update(model, msg)
-    contentPane = view(model, this::receive)
-
+    val backup = model
+    val backupPane = contentPane
+    try {
+      model = update(model, msg)
+      contentPane = view(model, this::receive)
+    } catch (exception: Exception) {
+      println("Error updating model with $msg (previous state was restored) $exception")
+      model = backup
+      contentPane = backupPane
+    }
     revalidate()
   }
 }
