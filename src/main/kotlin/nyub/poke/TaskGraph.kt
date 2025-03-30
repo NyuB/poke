@@ -6,7 +6,7 @@ import nyub.poke.Try.Companion.flatten
 class TaskGraph(tasks: Map<TaskId, Task>, private val links: Map<TaskId, Map<InputId, TaskId>>) {
   private val miniCache = Cache()
   private val executions: Map<TaskId, LinkedTask> =
-      tasks.mapValues { (k, v) -> LinkedTask(v, links[k] ?: emptyMap()) }
+      tasks.mapValues { (k, v) -> LinkedTask(k, v, links[k] ?: emptyMap()) }
 
   init {
     executions.values.forEach(LinkedTask::ensureExecutable)
@@ -20,13 +20,17 @@ class TaskGraph(tasks: Map<TaskId, Task>, private val links: Map<TaskId, Map<Inp
   }
 
   /** Wraps both a Task and its execution environment */
-  private inner class LinkedTask(val task: Task, private val links: Map<InputId, TaskId>) :
-      Execution {
+  private inner class LinkedTask(
+      val id: TaskId,
+      val task: Task,
+      private val links: Map<InputId, TaskId>
+  ) : Execution {
 
     fun ensureExecutable() {
       Dependencies.track(task).forEach { dep ->
         val linkedId =
-            links[dep.key] ?: throw IllegalArgumentException("Input ${dep.key} is not linked")
+            links[dep.key]
+                ?: throw IllegalArgumentException("Input '$id::${dep.key}' is not linked")
         val linkedTaskToFetch =
             executions[linkedId]
                 ?: throw IllegalArgumentException("Task $linkedId is missing in the task graph")
