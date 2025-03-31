@@ -11,12 +11,12 @@ import nyub.poke.Try.Companion.flatten
  */
 class ExecutableGraph
 private constructor(
-    tasks: Map<TaskId, Task>,
+    tasks: Map<TaskId, Task<*>>,
     private val links: Map<TaskId, Map<InputId, TaskId>>,
     private val cache: Cache
 ) {
   constructor(
-      tasks: Map<TaskId, Task>,
+      tasks: Map<TaskId, Task<*>>,
       links: Map<TaskId, Map<InputId, TaskId>>
   ) : this(tasks, links, Cache())
 
@@ -28,14 +28,14 @@ private constructor(
   }
 
   /** Add one task to the graph. The returned graph has a copy of this graph's cache. */
-  fun addTask(id: TaskId, task: Task, taskLinks: Map<InputId, TaskId>): ExecutableGraph {
+  fun addTask(id: TaskId, task: Task<*>, taskLinks: Map<InputId, TaskId>): ExecutableGraph {
     if (id in executions)
         throw IllegalArgumentException("Task $id already in graph, remove it first")
     return ExecutableGraph(
         executions.mapValues { it.value.task } + (id to task), links + (id to taskLinks), cache)
   }
 
-  fun execute(taskId: TaskId): Try<Any> {
+  fun execute(taskId: TaskId): Try<Any?> {
     val execution =
         executions[taskId]
             ?: throw IllegalArgumentException("Invalid task: '$taskId' is absent from graph")
@@ -45,7 +45,7 @@ private constructor(
   /** Wraps both a Task and its execution environment */
   private inner class LinkedTask(
       val id: TaskId,
-      val task: Task,
+      val task: Task<*>,
       private val links: Map<InputId, TaskId>
   ) : Execution {
 
@@ -64,7 +64,7 @@ private constructor(
       }
     }
 
-    override fun <A : Any> executeFetch(fetch: Description.Fetch<A>): Try<A> =
+    override fun <A> executeFetch(fetch: Description.Fetch<A>): Try<A> =
         Try.attempt {
               val taskId = links[fetch.key]!!
               execute(taskId).flatMap { Try.attempt { fetch.type.cast(it) } }
@@ -73,7 +73,7 @@ private constructor(
   }
 
   private class Cache {
-    fun get(id: TaskId, linkedTask: LinkedTask): Try<Any> {
+    fun get(id: TaskId, linkedTask: LinkedTask): Try<Any?> {
       val cached = cache[id]
       if (cached != null) return cached
       else {
@@ -83,6 +83,6 @@ private constructor(
       }
     }
 
-    private val cache = mutableMapOf<TaskId, Try<Any>>()
+    private val cache = mutableMapOf<TaskId, Try<Any?>>()
   }
 }

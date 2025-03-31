@@ -9,7 +9,7 @@ object Update {
 
   data class RemoveLink(val link: Model.Linking) : Message
 
-  data class AddTask(val id: String, val task: Task) : Message
+  data class AddTask(val id: String, val task: Task<*>) : Message
 
   data class RemoveTask(val id: TaskId) : Message
 
@@ -56,7 +56,7 @@ object Update {
                 .groupBy { it.taskId }
                 .mapValues { it.value.associate { links -> links.inputId to links.linked } })
     return when (val result = graph.execute(msg.taskId)) {
-      is Try.Success -> model.addResult(msg.taskId, result.result)
+      is Try.Success -> model.addResult(msg.taskId, result.result ?: "null")
       is Try.Failure -> model.addResult(msg.taskId, result.errors.joinToString(separator = "\n"))
     }
   }

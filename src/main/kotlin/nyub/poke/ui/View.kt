@@ -9,6 +9,7 @@ import javax.swing.JPanel
 import javax.swing.JTabbedPane
 import javax.swing.border.AbstractBorder
 import nyub.poke.InputId
+import nyub.poke.Task
 import nyub.poke.TaskId
 
 class View(
@@ -171,7 +172,8 @@ class TaskDefinitionView(
   private inner class BakeriesView : JPanel(GridBagLayout()) {
     init {
       taskBakeries.forEachIndexed { n, it ->
-        val bakeryComponent = it.taskComponent { id, task -> send(Update.AddTask(id, task)) }
+        val bakeryComponent =
+            it.taskComponent { id, task: Task<*> -> send(Update.AddTask(id, task)) }
         add(bakeryComponent, bakeryN(n))
       }
     }

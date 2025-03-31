@@ -11,11 +11,11 @@ import nyub.poke.Task
 import nyub.poke.TaskId
 
 fun interface TaskBakery {
-  fun taskComponent(send: (TaskId, Task) -> Unit): JComponent
+  fun taskComponent(send: (TaskId, Task<*>) -> Unit): JComponent
 
   companion object {
     @JvmStatic
-    fun of(prefix: String, task: Task) = TaskBakery { send ->
+    fun of(prefix: String, task: Task<*>) = TaskBakery { send ->
       SimpleTaskBakeryPanel(task, prefix, send)
     }
 
@@ -26,9 +26,9 @@ fun interface TaskBakery {
   }
 
   private class SimpleTaskBakeryPanel(
-      val task: Task,
+      val task: Task<*>,
       prefix: String,
-      val send: (TaskId, Task) -> Unit
+      val send: (TaskId, Task<*>) -> Unit
   ) : JPanel(GridLayout(1, 2)) {
     init {
       val text = JTextField()
@@ -41,7 +41,7 @@ fun interface TaskBakery {
 
   private class ConstantValueTaskBakeryPanel(
       title: String,
-      val send: (TaskId, Task) -> Unit,
+      val send: (TaskId, Task<*>) -> Unit,
       conversion: (String) -> Any
   ) : JPanel(GridLayout(1, 3)) {
     init {

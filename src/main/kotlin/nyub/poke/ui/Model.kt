@@ -6,7 +6,7 @@ import nyub.poke.Task
 import nyub.poke.TaskId
 
 class Model(
-    val tasks: Map<TaskId, Task>,
+    val tasks: Map<TaskId, Task<*>>,
     links: List<Linking>,
     val selection: Selection,
     val results: Map<String, *>
@@ -62,7 +62,7 @@ class Model(
   fun removeLink(link: Linking): Model =
       Model(tasks, links.filter { !it.same(link) }, selection, results)
 
-  fun addTask(id: TaskId, task: Task): Model {
+  fun addTask(id: TaskId, task: Task<*>): Model {
     return Model(tasks + Pair(id, task), links, selection, results)
   }
 
