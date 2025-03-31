@@ -28,19 +28,36 @@ object Update {
       is RemoveLink -> model.removeLink(msg.link)
       is RemoveTask -> model.removeTask(msg.id)
       is ExecuteTask -> {
-        val graph =
-            ExecutableGraph(
-                model.tasks,
-                model.links
-                    .filterIsInstance<Model.ValidLink>()
-                    .groupBy { it.taskId }
-                    .mapValues { it.value.associate { links -> links.inputId to links.linked } })
-        when (val result = graph.execute(msg.taskId)) {
-          is Try.Success -> model.addResult(msg.taskId, result.result)
-          is Try.Failure ->
-              model.addResult(msg.taskId, result.errors.joinToString(separator = "\n"))
-        }
+        executeTask(model, msg)
       }
+    }
+  }
+
+  private fun executeTask(model: Model, msg: ExecuteTask): Model {
+    val executableTasks =
+        model.tasks.filter { (taskId, task) ->
+          Dependencies.track(task).all { dep ->
+            model.links.any { link ->
+              link is Model.ValidLink && link.taskId == taskId && link.inputId == dep.key
+            }
+          }
+        }
+
+    require(msg.taskId in executableTasks) {
+      "Task ${msg.taskId} is not executable, did you forget to link some inputs ?"
+    }
+
+    val graph =
+        ExecutableGraph(
+            executableTasks,
+            model.links
+                .filterIsInstance<Model.ValidLink>()
+                .filter { it.taskId in executableTasks }
+                .groupBy { it.taskId }
+                .mapValues { it.value.associate { links -> links.inputId to links.linked } })
+    return when (val result = graph.execute(msg.taskId)) {
+      is Try.Success -> model.addResult(msg.taskId, result.result)
+      is Try.Failure -> model.addResult(msg.taskId, result.errors.joinToString(separator = "\n"))
     }
   }
 }
