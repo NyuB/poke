@@ -83,4 +83,26 @@ class TaskGraphTest : WithAssertExtensions {
     graph.execute("dup") `is equal to` Try.success("a::a")
     executionCount `is equal to` 1
   }
+
+  @Test
+  fun `adding a task does not invalidate cache`() {
+    var executionCount = 0
+
+    val taskThatShouldBeExecutedOnce = Task {
+      one {
+        executionCount++
+        "a"
+      }
+    }
+    val graph = TaskGraph(mapOf("A" to taskThatShouldBeExecutedOnce), emptyMap())
+    graph.execute("A") `is equal to` Try.success("a")
+
+    val anotherTaskDependingOnTheFirstOne = Task { fetch<String>("string").map { "<$it>" } }
+
+    val graphWithAnotherTask =
+        graph.addTask("B", anotherTaskDependingOnTheFirstOne, mapOf("string" to "A"))
+    graphWithAnotherTask.execute("B") `is equal to` Try.success("<a>")
+
+    executionCount `is equal to` 1
+  }
 }

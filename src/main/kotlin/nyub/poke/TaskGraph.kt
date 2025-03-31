@@ -3,8 +3,17 @@ package nyub.poke
 import nyub.poke.Execution.Companion.execute
 import nyub.poke.Try.Companion.flatten
 
-class TaskGraph(tasks: Map<TaskId, Task>, private val links: Map<TaskId, Map<InputId, TaskId>>) {
-  private val miniCache = Cache()
+class TaskGraph
+private constructor(
+    tasks: Map<TaskId, Task>,
+    private val links: Map<TaskId, Map<InputId, TaskId>>,
+    private val cache: Cache
+) {
+  constructor(
+      tasks: Map<TaskId, Task>,
+      links: Map<TaskId, Map<InputId, TaskId>>
+  ) : this(tasks, links, Cache())
+
   private val executions: Map<TaskId, LinkedTask> =
       tasks.mapValues { (k, v) -> LinkedTask(k, v, links[k] ?: emptyMap()) }
 
@@ -12,11 +21,18 @@ class TaskGraph(tasks: Map<TaskId, Task>, private val links: Map<TaskId, Map<Inp
     executions.values.forEach(LinkedTask::ensureExecutable)
   }
 
+  fun addTask(id: TaskId, task: Task, taskLinks: Map<InputId, TaskId>): TaskGraph {
+    if (id in executions)
+        throw IllegalArgumentException("Task $id already in graph, remove it first")
+    return TaskGraph(
+        executions.mapValues { it.value.task } + (id to task), links + (id to taskLinks), cache)
+  }
+
   fun execute(taskId: TaskId): Try<Any> {
     val execution =
         executions[taskId]
             ?: throw IllegalArgumentException("Invalid task: '$taskId' is absent from graph")
-    return miniCache.get(taskId, execution)
+    return cache.get(taskId, execution)
   }
 
   /** Wraps both a Task and its execution environment */
@@ -58,6 +74,13 @@ class TaskGraph(tasks: Map<TaskId, Task>, private val links: Map<TaskId, Map<Inp
         cache[id] = result
         return result
       }
+    }
+
+    fun invalidate(ids: List<TaskId>): Cache {
+      val nextCache = Cache()
+      nextCache.cache.putAll(cache)
+      ids.forEach(nextCache.cache::remove)
+      return nextCache
     }
 
     private val cache = mutableMapOf<TaskId, Try<Any>>()
