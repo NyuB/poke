@@ -14,12 +14,9 @@ class ExecutableGraphTest : WithAssertExtensions {
     combine(left, right, separator) { l, r, s -> "$l$s$r" }
   }
 
-  val a = Task { one { "A" } }
-  val b = Task { one { "B" } }
-  val comma = Task { one { "," } }
-
   @Test
   fun `link multiple inputs to the same output`() {
+    val a = Task { one { "A" } }
     val graph =
         ExecutableGraph(
             mapOf(
@@ -38,6 +35,9 @@ class ExecutableGraphTest : WithAssertExtensions {
 
   @Test
   fun `link each input to various outputs`() {
+    val a = Task { one { "A" } }
+    val b = Task { one { "B" } }
+    val comma = Task { one { "," } }
     val graph =
         ExecutableGraph(
             mapOf(
