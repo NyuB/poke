@@ -6,7 +6,7 @@ import nyub.poke.Description.Map.Companion.map
 import nyub.poke.Description.One.Companion.one
 import org.junit.jupiter.api.Test
 
-class TaskGraphTest : WithAssertExtensions {
+class ExecutableGraphTest : WithAssertExtensions {
   private val concatenation = Task {
     val left = fetch<String>("left")
     val right = fetch<String>("right")
@@ -21,7 +21,7 @@ class TaskGraphTest : WithAssertExtensions {
   @Test
   fun `link multiple inputs to the same output`() {
     val graph =
-        TaskGraph(
+        ExecutableGraph(
             mapOf(
                 "concat" to concatenation,
                 "a" to a,
@@ -39,7 +39,7 @@ class TaskGraphTest : WithAssertExtensions {
   @Test
   fun `link each input to various outputs`() {
     val graph =
-        TaskGraph(
+        ExecutableGraph(
             mapOf(
                 "concat" to concatenation,
                 "a" to a,
@@ -72,7 +72,7 @@ class TaskGraphTest : WithAssertExtensions {
     val uppercase = Task { fetch<String>("string").map(String::uppercase) }
 
     val graph =
-        TaskGraph(
+        ExecutableGraph(
             mapOf("string" to taskThatShouldBeExecutedOnce, "dup" to duplicate, "up" to uppercase),
             mapOf(
                 "dup" to mapOf("string" to "string"),
@@ -94,7 +94,7 @@ class TaskGraphTest : WithAssertExtensions {
         "a"
       }
     }
-    val graph = TaskGraph(mapOf("A" to taskThatShouldBeExecutedOnce), emptyMap())
+    val graph = ExecutableGraph(mapOf("A" to taskThatShouldBeExecutedOnce), emptyMap())
     graph.execute("A") `is equal to` Try.success("a")
 
     val anotherTaskDependingOnTheFirstOne = Task { fetch<String>("string").map { "<$it>" } }

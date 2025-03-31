@@ -29,7 +29,7 @@ object Update {
       is RemoveTask -> model.removeTask(msg.id)
       is ExecuteTask -> {
         val graph =
-            TaskGraph(
+            ExecutableGraph(
                 model.tasks,
                 model.links
                     .filterIsInstance<Model.ValidLink>()

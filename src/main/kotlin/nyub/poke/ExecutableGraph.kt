@@ -3,7 +3,13 @@ package nyub.poke
 import nyub.poke.Execution.Companion.execute
 import nyub.poke.Try.Companion.flatten
 
-class TaskGraph
+/**
+ * A task DAG where each task's [Dependencies] are fully connected by [links], and thus where each
+ * task is executable
+ *
+ * Maintains a cache of each task's result
+ */
+class ExecutableGraph
 private constructor(
     tasks: Map<TaskId, Task>,
     private val links: Map<TaskId, Map<InputId, TaskId>>,
@@ -21,10 +27,11 @@ private constructor(
     executions.values.forEach(LinkedTask::ensureExecutable)
   }
 
-  fun addTask(id: TaskId, task: Task, taskLinks: Map<InputId, TaskId>): TaskGraph {
+  /** Add one task to the graph. The returned graph has a copy of this graph's cache. */
+  fun addTask(id: TaskId, task: Task, taskLinks: Map<InputId, TaskId>): ExecutableGraph {
     if (id in executions)
         throw IllegalArgumentException("Task $id already in graph, remove it first")
-    return TaskGraph(
+    return ExecutableGraph(
         executions.mapValues { it.value.task } + (id to task), links + (id to taskLinks), cache)
   }
 
@@ -74,13 +81,6 @@ private constructor(
         cache[id] = result
         return result
       }
-    }
-
-    fun invalidate(ids: List<TaskId>): Cache {
-      val nextCache = Cache()
-      nextCache.cache.putAll(cache)
-      ids.forEach(nextCache.cache::remove)
-      return nextCache
     }
 
     private val cache = mutableMapOf<TaskId, Try<Any>>()
