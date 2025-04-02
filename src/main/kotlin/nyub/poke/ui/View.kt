@@ -5,12 +5,14 @@ import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import javax.swing.BorderFactory
 import javax.swing.JButton
+import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JTabbedPane
 import javax.swing.border.AbstractBorder
 import nyub.poke.InputId
 import nyub.poke.Task
 import nyub.poke.TaskId
+import java.awt.GridBagConstraints.BOTH
 
 class View(
     appModel: Model,
@@ -21,7 +23,7 @@ class View(
   init {
     add("Tasks", TaskDefinitionView(appModel, representationRegister, send, taskBakeries))
     appModel.results.forEach {
-      add(it.key, representationRegister.componentForValue(it.value ?: "null"))
+      addTab(it.key, representationRegister.componentForValue(it.value ?: "null"))
     }
   }
 }
@@ -44,9 +46,9 @@ class TaskDefinitionView(
     val taskBakeries: List<TaskBakery>,
 ) : JPanel(GridBagLayout()) {
   init {
-    add(TasksView().padded(), tasks())
-    add(LinksView().padded(), links())
-    add(BakeriesView().padded(), bakeries())
+    add(TasksView(), tasks())
+    add(LinksView(), links())
+    add(BakeriesView(), bakeries())
   }
 
   private fun tasks() =
@@ -54,18 +56,24 @@ class TaskDefinitionView(
         gridx = 0
         gridy = 0
         gridheight = 2
+        weightx = 4.0
+        fill = BOTH
       }
 
   private fun links() =
       GridBagConstraintsBase().apply {
         gridx = 1
         gridy = 0
+        weightx = 1.0
+        fill = WIDTH
       }
 
   private fun bakeries() =
       GridBagConstraintsBase().apply {
         gridx = 1
         gridy = 1
+        weightx = 1.0
+        fill = BOTH
       }
 
   inner class LinksView : JPanel(GridBagLayout()) {
@@ -169,20 +177,14 @@ class TaskDefinitionView(
         }
   }
 
-  private inner class BakeriesView : JPanel(GridBagLayout()) {
+  private inner class BakeriesView : JTabbedPane() {
     init {
-      taskBakeries.forEachIndexed { n, it ->
+      taskBakeries.forEach {
         val bakeryComponent =
             it.taskComponent { id, task: Task<*> -> send(Update.AddTask(id, task)) }
-        add(bakeryComponent, bakeryN(n))
+        addTab(bakeryComponent.name, bakeryComponent.component)
       }
     }
-
-    private fun bakeryN(n: Int) =
-        GridBagConstraintsBase().apply {
-          gridx = 0
-          gridy = n
-        }
   }
 
   private fun taskButton(taskId: TaskId) =
@@ -231,12 +233,11 @@ class TaskDefinitionView(
 
   private class GridBagConstraintsBase : GridBagConstraints() {
     init {
-      fill = BOTH
       anchor = FIRST_LINE_START
     }
   }
 
-  private fun JPanel.padded(): JPanel {
+  private fun JComponent.padded(): JPanel {
     return object : JPanel(FlowLayout(FlowLayout.CENTER, 3, 3)) {
       init {
         add(this@padded)

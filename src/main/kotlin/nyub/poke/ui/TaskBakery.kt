@@ -11,28 +11,32 @@ import nyub.poke.Task
 import nyub.poke.TaskId
 
 fun interface TaskBakery {
-  fun taskComponent(send: (TaskId, Task<*>) -> Unit): JComponent
+  class TaskComponent(val name: String, val component: JComponent)
+
+  fun taskComponent(send: (TaskId, Task<*>) -> Unit): TaskComponent
 
   companion object {
     @JvmStatic
     fun of(prefix: String, task: Task<*>) = TaskBakery { send ->
-      SimpleTaskBakeryPanel(task, prefix, send)
+      SimpleTaskBakeryPanel(prefix, task, send).named(prefix)
     }
 
     @JvmStatic
     fun constant(title: String, conversion: (String) -> Any = { it }) = TaskBakery { send ->
-      ConstantValueTaskBakeryPanel(title, send, conversion)
+      ConstantValueTaskBakeryPanel(send, conversion).named(title)
     }
+
+    private fun JComponent.named(name: String): TaskComponent = TaskComponent(name, this)
   }
 
   private class SimpleTaskBakeryPanel(
-      val task: Task<*>,
       prefix: String,
+      val task: Task<*>,
       val send: (TaskId, Task<*>) -> Unit
   ) : JPanel(GridLayout(1, 2)) {
     init {
+      val label = JLabel("id")
       val text = JTextField()
-      val label = JLabel(prefix)
       text.addActionListener { send("$prefix[${text.text}]", task) }
       add(label)
       add(text)
@@ -40,13 +44,13 @@ fun interface TaskBakery {
   }
 
   private class ConstantValueTaskBakeryPanel(
-      title: String,
       val send: (TaskId, Task<*>) -> Unit,
       conversion: (String) -> Any
-  ) : JPanel(GridLayout(1, 3)) {
+  ) : JPanel(GridLayout(2, 2)) {
     init {
-      val label = JLabel(title)
-      val idText = JTextField("$title#1")
+      val idLabel = JLabel("id")
+      val idText = JTextField()
+      val valueLabel = JLabel("value")
       val valueText = JTextField()
       val actionListener = ActionListener {
         val value = conversion(valueText.text)
@@ -54,8 +58,9 @@ fun interface TaskBakery {
       }
       idText.addActionListener(actionListener)
       valueText.addActionListener(actionListener)
-      add(label)
+      add(idLabel)
       add(idText)
+      add(valueLabel)
       add(valueText)
     }
   }
